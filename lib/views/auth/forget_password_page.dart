@@ -5,7 +5,6 @@ import '../../core/constants/app_defaults.dart';
 import '../../core/routes/app_routes.dart';
 
 class ForgetPasswordPage extends StatefulWidget {
-
   const ForgetPasswordPage({super.key});
 
   @override
@@ -79,10 +78,13 @@ class _ForgetPasswordPageState extends State<ForgetPasswordPage> {
                           onPressed: () {
                             if (_formKey.currentState?.validate() ?? false) {
                               Navigator.pushNamed(
-                                  context, AppRoutes.passwordReset, arguments: _phoneController.text,);
+                                context,
+                                AppRoutes.resetVerification,
+                                arguments: _phoneController.text,
+                              );
                             }
                           },
-                          child: const Text('Send me link'),
+                          child: const Text('Send Code'),
                         ),
                       ),
                     ],

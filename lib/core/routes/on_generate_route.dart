@@ -5,6 +5,7 @@ import '../../views/auth/intro_login_page.dart';
 import '../../views/auth/login_or_signup_page.dart';
 import '../../views/auth/login_page.dart';
 import '../../views/auth/number_verification_page.dart';
+import '../../views/auth/reset_verification_page.dart';
 import '../../views/auth/password_reset_page.dart';
 import '../../views/auth/sign_up_page.dart';
 import '../../views/cart/cart_page.dart';
@@ -50,7 +51,6 @@ import 'app_routes.dart';
 import 'unknown_page.dart';
 import '../../views/menu/menu_page.dart';
 import '../../views/drawer/privacy_policy_page.dart';
-
 
 class RouteGenerator {
   static Route? onGenerate(RouteSettings settings) {
@@ -104,12 +104,20 @@ class RouteGenerator {
         return CupertinoPageRoute(
             builder: (_) => const NumberVerificationPage());
 
+      case AppRoutes.resetVerification:
+        return CupertinoPageRoute(
+            builder: (_) =>
+                ResetVerificationPage(phone: settings.arguments as String));
+
       case AppRoutes.forgotPassword:
         return CupertinoPageRoute(builder: (_) => const ForgetPasswordPage());
 
       case AppRoutes.passwordReset:
         final args = settings.arguments as String? ?? '';
-        return CupertinoPageRoute(builder: (_) => PasswordResetPage(phone: args,));
+        return CupertinoPageRoute(
+            builder: (_) => PasswordResetPage(
+                  phone: args,
+                ));
 
       case AppRoutes.newItems:
         return CupertinoPageRoute(builder: (_) => const NewItemsPage());
@@ -176,9 +184,7 @@ class RouteGenerator {
         return CupertinoPageRoute(builder: (_) => const SettingsPage());
 
       case AppRoutes.category:
-        return CupertinoPageRoute(
-          builder: (_) => const MenuPage()
-        );
+        return CupertinoPageRoute(builder: (_) => const MenuPage());
 
       case AppRoutes.settingsLanguage:
         return CupertinoPageRoute(builder: (_) => const LanguageSettingsPage());
