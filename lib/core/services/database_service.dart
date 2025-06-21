@@ -14,10 +14,11 @@ class DatabaseService {
   bool _useLocalData = false;
 
   // Backend API配置 - 使用10.0.2.2来访问主机localhost（适用于Android模拟器）
-  static const String baseUrl = 'http://10.0.2.2:3000/api';
-  static const String healthUrl = 'http://10.0.2.2:3000/health';
+  static const String baseUrl =
+      'http://10.72.44.120:3000/api'; //10.0.2.2 192.168.56.1
+  static const String healthUrl = 'http://192.168.3.7:3000/health'; //10.0.2.2
   static const Duration timeoutDuration = Duration(seconds: 10);
-  
+
   // Test backend connection
   Future<bool> connect() async {
     try {
@@ -26,7 +27,7 @@ class DatabaseService {
         Uri.parse(healthUrl),
         headers: {'Content-Type': 'application/json'},
       ).timeout(timeoutDuration);
-      
+
       if (response.statusCode == 200) {
         _isConnected = true;
         _useLocalData = false;
@@ -69,16 +70,17 @@ class DatabaseService {
       debugPrint('Using local category data');
       return _getMockCategories();
     }
-    
+
     try {
       final responseData = await _makeRequest('/categories');
-      
+
       if (responseData['success'] == true) {
         final List<dynamic> data = responseData['data'];
         debugPrint('Successfully fetched ${data.length} categories from API');
         return data.map((json) => CategoryModel.fromJson(json)).toList();
       } else {
-        throw Exception(responseData['message'] ?? 'Failed to fetch categories');
+        throw Exception(
+            responseData['message'] ?? 'Failed to fetch categories');
       }
     } catch (e) {
       debugPrint('Failed to fetch category data: $e, using local data');
@@ -95,10 +97,10 @@ class DatabaseService {
         return null;
       }
     }
-    
+
     try {
       final responseData = await _makeRequest('/categories/$id');
-      
+
       if (responseData['success'] == true) {
         return CategoryModel.fromJson(responseData['data']);
       }
@@ -114,30 +116,33 @@ class DatabaseService {
   }
 
   // Products CRUD operations
-  Future<List<ProductModel>> getProducts({String? categoryId, bool? isNew, bool? isPopular}) async {
+  Future<List<ProductModel>> getProducts(
+      {String? categoryId, bool? isNew, bool? isPopular}) async {
     if (_useLocalData) {
       debugPrint('Using local product data');
       return _getMockProducts().where((product) {
-        if (categoryId != null && product.categoryId != categoryId) return false;
+        if (categoryId != null && product.categoryId != categoryId)
+          return false;
         if (isNew != null && product.isNew != isNew) return false;
         if (isPopular != null && product.isPopular != isPopular) return false;
         return true;
       }).toList();
     }
-    
+
     try {
       // Build query parameters
       final queryParams = <String, String>{};
       if (categoryId != null) queryParams['categoryId'] = categoryId;
       if (isNew != null) queryParams['isNew'] = isNew.toString();
       if (isPopular != null) queryParams['isPopular'] = isPopular.toString();
-      
-      final queryString = queryParams.isNotEmpty 
-          ? '?' + queryParams.entries.map((e) => '${e.key}=${e.value}').join('&')
+
+      final queryString = queryParams.isNotEmpty
+          ? '?' +
+              queryParams.entries.map((e) => '${e.key}=${e.value}').join('&')
           : '';
-      
+
       final responseData = await _makeRequest('/products$queryString');
-      
+
       if (responseData['success'] == true) {
         final List<dynamic> data = responseData['data'];
         debugPrint('Successfully fetched ${data.length} products from API');
@@ -149,7 +154,8 @@ class DatabaseService {
       debugPrint('Failed to fetch product data: $e, using local data');
       _useLocalData = true;
       return _getMockProducts().where((product) {
-        if (categoryId != null && product.categoryId != categoryId) return false;
+        if (categoryId != null && product.categoryId != categoryId)
+          return false;
         if (isNew != null && product.isNew != isNew) return false;
         if (isPopular != null && product.isPopular != isPopular) return false;
         return true;
@@ -165,10 +171,10 @@ class DatabaseService {
         return null;
       }
     }
-    
+
     try {
       final responseData = await _makeRequest('/products/$id');
-      
+
       if (responseData['success'] == true) {
         return ProductModel.fromJson(responseData['data']);
       }
@@ -184,7 +190,8 @@ class DatabaseService {
   }
 
   // Bundles CRUD operations
-  Future<List<BundleModel>> getBundles({String? categoryId, bool? isPopular}) async {
+  Future<List<BundleModel>> getBundles(
+      {String? categoryId, bool? isPopular}) async {
     if (_useLocalData) {
       debugPrint('Using local bundle data');
       return _getMockBundles().where((bundle) {
@@ -193,19 +200,20 @@ class DatabaseService {
         return true;
       }).toList();
     }
-    
+
     try {
       // Build query parameters
       final queryParams = <String, String>{};
       if (categoryId != null) queryParams['categoryId'] = categoryId;
       if (isPopular != null) queryParams['isPopular'] = isPopular.toString();
-      
-      final queryString = queryParams.isNotEmpty 
-          ? '?' + queryParams.entries.map((e) => '${e.key}=${e.value}').join('&')
+
+      final queryString = queryParams.isNotEmpty
+          ? '?' +
+              queryParams.entries.map((e) => '${e.key}=${e.value}').join('&')
           : '';
-      
+
       final responseData = await _makeRequest('/bundles$queryString');
-      
+
       if (responseData['success'] == true) {
         final List<dynamic> data = responseData['data'];
         debugPrint('Successfully fetched ${data.length} bundles from API');
@@ -232,10 +240,10 @@ class DatabaseService {
         return null;
       }
     }
-    
+
     try {
       final responseData = await _makeRequest('/bundles/$id');
-      
+
       if (responseData['success'] == true) {
         return BundleModel.fromJson(responseData['data']);
       }
@@ -250,7 +258,7 @@ class DatabaseService {
     throw UnimplementedError('Create operations not implemented');
   }
 
-    // Get bundle details with product information
+  // Get bundle details with product information
   Future<BundleModel?> getBundleDetails(String bundleId) async {
     if (_useLocalData) {
       try {
@@ -262,7 +270,7 @@ class DatabaseService {
 
     try {
       debugPrint('Fetching bundle details: $bundleId');
-      
+
       final responseData = await _makeRequest('/bundles/$bundleId');
 
       if (responseData['success'] == true && responseData['data'] != null) {
@@ -273,7 +281,7 @@ class DatabaseService {
         debugPrint('Bundle not found: $bundleId');
         return null;
       }
-      
+
       return null;
     } catch (e) {
       debugPrint('Failed to fetch bundle details: $e');
@@ -286,20 +294,173 @@ class DatabaseService {
     }
   }
 
+  // Authentication operations
+  Future<Map<String, dynamic>> loginWithEmail(
+      String email, String password) async {
+    try {
+      final response = await http
+          .post(
+            Uri.parse('$baseUrl/auth/login'),
+            headers: {'Content-Type': 'application/json'},
+            body: json.encode({'email': email, 'password': password}),
+          )
+          .timeout(timeoutDuration);
+
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      } else {
+        throw Exception('Login failed: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('Login failed: $e');
+      rethrow;
+    }
+  }
+
+  Future<Map<String, dynamic>> loginWithPhone(
+      String phone, String password) async {
+    try {
+      final response = await http
+          .post(
+            Uri.parse('$baseUrl/auth/phone/login'),
+            headers: {'Content-Type': 'application/json'},
+            body: json.encode({'phone': phone, 'password': password}),
+          )
+          .timeout(timeoutDuration);
+
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      } else {
+        throw Exception('Login failed: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('Login failed: $e');
+      rethrow;
+    }
+  }
+
+  Future<Map<String, dynamic>> registerUser(
+      String email, String phone, String password, String name) async {
+    try {
+      final response = await http
+          .post(
+            Uri.parse('$baseUrl/auth/register'),
+            headers: {'Content-Type': 'application/json'},
+            body: json.encode({
+              'email': email,
+              'phone': phone,
+              'password': password,
+              'name': name
+            }),
+          )
+          .timeout(timeoutDuration);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return json.decode(response.body);
+      } else {
+        throw Exception('Registration failed: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('Registration failed: $e');
+      rethrow;
+    }
+  }
+
+  Future<Map<String, dynamic>> getUserInfo(String id) async {
+    try {
+      final response = await http
+          .post(
+            Uri.parse('$baseUrl/auth/userById'),
+            headers: {'Content-Type': 'application/json'},
+            body: json.encode({'id': id}),
+          )
+          .timeout(timeoutDuration);
+
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      } else {
+        throw Exception('getUser failed: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('getUser failed: $e');
+      rethrow;
+    }
+  }
+
+  Future<Map<String, dynamic>> updateUser(String id, String firstName,
+      String lastName, String phone, String gender, String birthday) async {
+    try {
+      final response = await http
+          .post(
+            Uri.parse('$baseUrl/auth/user/update'),
+            headers: {'Content-Type': 'application/json'},
+            body: json.encode({
+              "id": id,
+              'firstName': firstName,
+              'lastName': lastName,
+              'phone': phone,
+              'gender': gender,
+              'birthday': birthday,
+            }),
+          )
+          .timeout(timeoutDuration);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return json.decode(response.body);
+      } else {
+        throw Exception('Registration failed: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('Registration failed: $e');
+      rethrow;
+    }
+  }
+
+  Future<Map<String, dynamic>> resetPassword(
+      String phone, String password) async {
+    try {
+      final response = await http
+          .post(
+            Uri.parse('$baseUrl/auth/reset/password'),
+            headers: {'Content-Type': 'application/json'},
+            body: json.encode({
+              'phone': phone,
+              'password': password,
+            }),
+          )
+          .timeout(timeoutDuration);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return json.decode(response.body);
+      } else {
+        throw Exception('Registration failed: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('Registration failed: $e');
+      rethrow;
+    }
+  }
+
   // Search operations
   Future<List<ProductModel>> searchProducts(String query) async {
     if (_useLocalData) {
       final products = _getMockProducts();
-      return products.where((product) => 
-        product.name.toLowerCase().contains(query.toLowerCase()) ||
-        (product.description?.toLowerCase().contains(query.toLowerCase()) ?? false) ||
-        product.tags.any((tag) => tag.toLowerCase().contains(query.toLowerCase()))
-      ).toList();
+      return products
+          .where((product) =>
+              product.name.toLowerCase().contains(query.toLowerCase()) ||
+              (product.description
+                      ?.toLowerCase()
+                      .contains(query.toLowerCase()) ??
+                  false) ||
+              product.tags.any(
+                  (tag) => tag.toLowerCase().contains(query.toLowerCase())))
+          .toList();
     }
-    
+
     try {
-      final responseData = await _makeRequest('/products/search/${Uri.encodeComponent(query)}');
-      
+      final responseData =
+          await _makeRequest('/products/search/${Uri.encodeComponent(query)}');
+
       if (responseData['success'] == true) {
         final List<dynamic> data = responseData['data'];
         return data.map((json) => ProductModel.fromJson(json)).toList();
@@ -309,11 +470,16 @@ class DatabaseService {
     } catch (e) {
       debugPrint('Product search failed: $e, using local search');
       final products = await getProducts();
-      return products.where((product) => 
-        product.name.toLowerCase().contains(query.toLowerCase()) ||
-        (product.description?.toLowerCase().contains(query.toLowerCase()) ?? false) ||
-        product.tags.any((tag) => tag.toLowerCase().contains(query.toLowerCase()))
-      ).toList();
+      return products
+          .where((product) =>
+              product.name.toLowerCase().contains(query.toLowerCase()) ||
+              (product.description
+                      ?.toLowerCase()
+                      .contains(query.toLowerCase()) ??
+                  false) ||
+              product.tags.any(
+                  (tag) => tag.toLowerCase().contains(query.toLowerCase())))
+          .toList();
     }
   }
 
@@ -833,4 +999,4 @@ class DatabaseService {
       ),
     ];
   }
-} 
+}

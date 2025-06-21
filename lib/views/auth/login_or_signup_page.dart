@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
 
 import '../../core/components/network_image.dart';
 import '../../core/constants/constants.dart';
@@ -40,40 +39,6 @@ class _Footer extends StatelessWidget {
               child: const Text('Login With Phone Number'),
             ),
           ),
-        ),
-        const SizedBox(height: AppDefaults.margin),
-        Text(
-          'OR',
-          style: Theme.of(context)
-              .textTheme
-              .titleLarge
-              ?.copyWith(fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: AppDefaults.margin),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            IconButton(
-              onPressed: () {},
-              icon: SvgPicture.asset(AppIcons.appleIcon),
-              iconSize: 48,
-            ),
-            IconButton(
-              onPressed: () {},
-              icon: SvgPicture.asset(AppIcons.googleIcon),
-              iconSize: 48,
-            ),
-            IconButton(
-              onPressed: () {},
-              icon: SvgPicture.asset(AppIcons.twitterIcon),
-              iconSize: 48,
-            ),
-            IconButton(
-              onPressed: () {},
-              icon: SvgPicture.asset(AppIcons.facebookIcon),
-              iconSize: 48,
-            ),
-          ],
         ),
       ],
     );

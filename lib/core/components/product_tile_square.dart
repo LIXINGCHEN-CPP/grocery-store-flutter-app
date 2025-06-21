@@ -22,28 +22,30 @@ class ProductTileSquare extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer2<CartProvider, FavoriteProvider>(
       builder: (context, cartProvider, favoriteProvider, child) {
-        final isInCart = data.id != null && 
+        final isInCart = data.id != null &&
             cartProvider.isInCart(data.id!, CartItemType.product);
-        final cartQuantity = data.id != null ? 
-            cartProvider.getItemQuantity(data.id!, CartItemType.product) : 0;
-        final isFavorite = data.id != null && 
+        final cartQuantity = data.id != null
+            ? cartProvider.getItemQuantity(data.id!, CartItemType.product)
+            : 0;
+        final isFavorite = data.id != null &&
             favoriteProvider.isFavorite(data.id!, FavoriteItemType.product);
 
         return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppDefaults.padding / 2),
+          padding:
+              const EdgeInsets.symmetric(horizontal: AppDefaults.padding / 2),
           child: Material(
             borderRadius: AppDefaults.borderRadius,
             color: AppColors.scaffoldBackground,
             child: InkWell(
               borderRadius: AppDefaults.borderRadius,
               onTap: () => Navigator.pushNamed(
-                context, 
-                AppRoutes.productDetails, 
+                context,
+                AppRoutes.productDetails,
                 arguments: data,
               ),
               child: Container(
                 width: 176,
-                height: 280,
+                height: 300, // 增加高度以解决溢出问题
                 padding: const EdgeInsets.all(AppDefaults.padding),
                 decoration: BoxDecoration(
                   // border: Border.all(width: 0.1, color: AppColors.placeholder),
@@ -56,7 +58,8 @@ class ProductTileSquare extends StatelessWidget {
                     Stack(
                       children: [
                         Padding(
-                          padding: const EdgeInsets.all(AppDefaults.padding / 2),
+                          padding:
+                              const EdgeInsets.all(AppDefaults.padding / 2),
                           child: AspectRatio(
                             aspectRatio: 1 / 1,
                             child: NetworkImageWithLoader(
@@ -100,14 +103,15 @@ class ProductTileSquare extends StatelessWidget {
                                 FavoriteItemType.product,
                                 product: data,
                               );
-                              
+
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text(isFavorite 
-                                      ? 'Removed from favorites' 
+                                  content: Text(isFavorite
+                                      ? 'Removed from favorites'
                                       : 'Added to favorites'),
                                   duration: const Duration(milliseconds: 800),
-                                  backgroundColor: isFavorite ? Colors.orange : Colors.green,
+                                  backgroundColor:
+                                      isFavorite ? Colors.orange : Colors.green,
                                 ),
                               );
                             },
@@ -119,7 +123,9 @@ class ProductTileSquare extends StatelessWidget {
                                 shape: BoxShape.circle,
                               ),
                               child: Icon(
-                                isFavorite ? Icons.favorite : Icons.favorite_border,
+                                isFavorite
+                                    ? Icons.favorite
+                                    : Icons.favorite_border,
                                 color: isFavorite ? Colors.red : Colors.grey,
                                 size: 16,
                               ),
@@ -134,10 +140,10 @@ class ProductTileSquare extends StatelessWidget {
                     Text(
                       data.name,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontSize: 16,                  // Title font size
-                        // fontWeight: FontWeight.bold,   // Bold
-                        color: Colors.black,           // Color
-                      ),
+                            fontSize: 16, // Title font size
+                            // fontWeight: FontWeight.bold,   // Bold
+                            color: Colors.black, // Color
+                          ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -147,10 +153,10 @@ class ProductTileSquare extends StatelessWidget {
                     Text(
                       data.weight,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        fontSize: 12,                  // Sub-text font size
-                        fontWeight: FontWeight.w400,   // Regular weight
-                        color: Colors.grey[700],       // Dark grey
-                      ),
+                            fontSize: 12, // Sub-text font size
+                            fontWeight: FontWeight.w400, // Regular weight
+                            color: Colors.grey[700], // Dark grey
+                          ),
                     ),
                     const SizedBox(height: 4),
 
@@ -164,37 +170,45 @@ class ProductTileSquare extends StatelessWidget {
                             children: [
                               Text(
                                 '\$${data.currentPrice.toInt()}',
-                                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                  fontSize: 18,                  // Current price font size
-                                  fontWeight: FontWeight.w600,   // Slightly bold
-                                  color: AppColors.primary,      // Primary color
-                                ),
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleLarge
+                                    ?.copyWith(
+                                      fontSize: 18, // Current price font size
+                                      fontWeight:
+                                          FontWeight.w600, // Slightly bold
+                                      color: AppColors.primary, // Primary color
+                                    ),
                               ),
                               if (data.originalPrice > data.currentPrice) ...[
                                 Text(
                                   '\$${data.originalPrice}',
-                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    fontSize: 12,                  // Original price font size
-                                    color: Colors.grey,            // Grey color
-                                    decoration: TextDecoration.lineThrough,
-                                  ),
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodyMedium
+                                      ?.copyWith(
+                                        fontSize:
+                                            12, // Original price font size
+                                        color: Colors.grey, // Grey color
+                                        decoration: TextDecoration.lineThrough,
+                                      ),
                                 ),
                               ],
                             ],
                           ),
                         ),
-                        
+
                         // Quick add to cart button
                         GestureDetector(
                           onTap: () async {
                             // Always add one more item to cart
                             await cartProvider.addProduct(data, quantity: 1);
-                            
+
                             // Show brief feedback
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text(isInCart 
-                                    ? 'Quantity increased' 
+                                content: Text(isInCart
+                                    ? 'Quantity increased'
                                     : 'Added to cart'),
                                 duration: const Duration(milliseconds: 800),
                                 backgroundColor: Colors.green,

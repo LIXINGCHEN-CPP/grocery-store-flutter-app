@@ -110,11 +110,19 @@ class AppTheme {
     filled: true,
     floatingLabelBehavior: FloatingLabelBehavior.never,
     border: OutlineInputBorder(
-      borderSide: BorderSide.none,
+      borderSide: BorderSide(color: AppColors.gray, width: 1),
       borderRadius: BorderRadius.all(Radius.circular(8)),
     ),
-    enabledBorder: OutlineInputBorder(borderSide: BorderSide.none),
-    focusedBorder: OutlineInputBorder(borderSide: BorderSide.none),
+    enabledBorder: OutlineInputBorder(
+      borderSide: BorderSide(color: AppColors.gray, width: 1),
+      borderRadius: BorderRadius.all(Radius.circular(8)),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderSide: BorderSide(color: AppColors.primary, width: 1),
+      borderRadius: BorderRadius.all(Radius.circular(8)),
+    ),
+    hintStyle: TextStyle(color: AppColors.placeholder),
+    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
   );
 
   static final otpInputDecorationTheme = InputDecorationTheme(

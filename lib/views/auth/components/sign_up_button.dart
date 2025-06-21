@@ -7,7 +7,11 @@ import '../../../core/routes/app_routes.dart';
 class SignUpButton extends StatelessWidget {
   const SignUpButton({
     super.key,
+    required this.formKey, required this.onPressed,
   });
+
+  final GlobalKey<FormState> formKey;
+  final VoidCallback? onPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +28,10 @@ class SignUpButton extends StatelessWidget {
           const Spacer(),
           ElevatedButton(
             onPressed: () {
-              Navigator.pushNamed(context, AppRoutes.numberVerification);
+              if (formKey.currentState?.validate() ?? false) {
+                onPressed?.call();
+                // Navigator.pushNamed(context, AppRoutes.numberVerification);
+              }
             },
             style: ElevatedButton.styleFrom(elevation: 1),
             child: SvgPicture.asset(

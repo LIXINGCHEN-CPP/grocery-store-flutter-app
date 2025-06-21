@@ -59,7 +59,8 @@ class _HomePageState extends State<HomePage> {
                   leading: Padding(
                     padding: const EdgeInsets.only(left: 8),
                     child: ElevatedButton(
-                      onPressed: () => Navigator.pushNamed(context, AppRoutes.drawerPage),
+                      onPressed: () =>
+                          Navigator.pushNamed(context, AppRoutes.drawerPage),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFFFFFFF),
                         shape: const CircleBorder(),
@@ -68,12 +69,15 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                   floating: true,
-                  title: SvgPicture.asset("assets/images/app_logo.svg", height: 32),
+                  title: SvgPicture.asset("assets/images/app_logo.svg",
+                      height: 32),
                   actions: [
                     Padding(
-                      padding: const EdgeInsets.only(right: 8, top: 4, bottom: 4),
+                      padding:
+                          const EdgeInsets.only(right: 8, top: 4, bottom: 4),
                       child: ElevatedButton(
-                        onPressed: () => Navigator.pushNamed(context, AppRoutes.search),
+                        onPressed: () =>
+                            Navigator.pushNamed(context, AppRoutes.search),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFFFFFFFF),
                           shape: const CircleBorder(),
@@ -95,26 +99,26 @@ class _HomePageState extends State<HomePage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const SizedBox(height: AppDefaults.padding),
-
                         TitleAndActionButton(
                           title: 'Categories',
                           onTap: () => Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => const EntryPointUI(initialIndex: 1),
+                              builder: (_) =>
+                                  const EntryPointUI(initialIndex: 1),
                             ),
                           ),
                         ),
-
                         const SizedBox(height: AppDefaults.padding),
-
                         SizedBox(
                           height: 120,
                           child: ListView.separated(
-                            padding: const EdgeInsets.symmetric(horizontal: AppDefaults.padding),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: AppDefaults.padding),
                             scrollDirection: Axis.horizontal,
                             itemCount: appProvider.categories.length,
-                            separatorBuilder: (_, __) => const SizedBox(width: AppDefaults.padding),
+                            separatorBuilder: (_, __) =>
+                                const SizedBox(width: AppDefaults.padding),
                             itemBuilder: (context, idx) {
                               final category = appProvider.categories[idx];
                               return SizedBox(
@@ -122,7 +126,9 @@ class _HomePageState extends State<HomePage> {
                                 child: CategoryTile(
                                   imageLink: category.imageUrl,
                                   label: category.name,
-                                  backgroundColor: Color(int.parse(category.backgroundColor.replaceFirst('#', '0xff'))),
+                                  backgroundColor: Color(int.parse(category
+                                      .backgroundColor
+                                      .replaceFirst('#', '0xff'))),
                                   onTap: () => Navigator.pushNamed(
                                     context,
                                     AppRoutes.categoryDetails,
@@ -133,7 +139,6 @@ class _HomePageState extends State<HomePage> {
                             },
                           ),
                         ),
-
                         const SizedBox(height: AppDefaults.padding),
                       ],
                     ),
@@ -142,9 +147,12 @@ class _HomePageState extends State<HomePage> {
 
                 // 原有热门套餐、新品等模块
                 const SliverToBoxAdapter(child: PopularPacks()),
-                const SliverPadding(
-                  padding: EdgeInsets.symmetric(vertical: AppDefaults.padding),
-                  sliver: SliverToBoxAdapter(child: OurNewItem()),
+                SliverPadding(
+                  padding: EdgeInsets.only(
+                    top: AppDefaults.padding,
+                    bottom: AppDefaults.padding + 11, // 增加底部padding以解决溢出问题
+                  ),
+                  sliver: const SliverToBoxAdapter(child: OurNewItem()),
                 ),
               ],
             );

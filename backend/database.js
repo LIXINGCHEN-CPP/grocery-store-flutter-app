@@ -1,4 +1,6 @@
 const { MongoClient } = require('mongodb');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const config = require('./config');
 
 class Database {
@@ -50,7 +52,7 @@ class Database {
   async getProducts(filters = {}) {
     const db = this.getDb();
     const query = {};
-    
+
     if (filters.categoryId) {
       query.categoryId = filters.categoryId;
     }
@@ -87,7 +89,7 @@ class Database {
   async getBundles(filters = {}) {
     const db = this.getDb();
     const query = {};
-    
+
     if (filters.categoryId) {
       query.categoryId = filters.categoryId;
     }
@@ -105,6 +107,111 @@ class Database {
     const db = this.getDb();
     return await db.collection('bundles').findOne({ _id: new require('mongodb').ObjectId(id) });
   }
+
+  // User Authentication
+  async createUser(userData) {
+    const db = this.getDb();
+
+    // Check if user exists
+    const existingUser = await db.collection('users').findOne({
+      $or: [
+        { email: userData.email },
+        { phone: userData.phone }
+      ]
+    });
+
+    if (existingUser) {
+      throw new Error('User already exists');
+    }
+
+    // Hash password
+    const salt = await bcrypt.genSalt(10);
+    userData.password = await bcrypt.hash(userData.password, salt);
+
+    // Insert user
+    const result = await db.collection('users').insertOne(userData);
+    return result.insertedId;
+  }
+
+  async resetPassword(phone, newPassword) {
+    const db = this.getDb();
+
+    // 1. 根据手机号找到用户
+    const user = await db.collection('users').findOne({ phone });
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    // 2. 加密并哈希新密码
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    // 3. 更新数据库中用户密码
+    const result = await db.collection('users').updateOne(
+        { phone },
+        { $set: { password: hashedPassword } }
+    );
+
+    if (result.modifiedCount === 0) {
+      throw new Error('Password update failed');
+    }
+
+    return user; // 返回 true 表示更新成功
+  }
+
+  async getUserByEmail(email) {
+    const db = this.getDb();
+    return await db.collection('users').findOne({ email });
+  }
+
+  async getUserByPhone(phone) {
+    const db = this.getDb();
+    return await db.collection('users').findOne({ phone });
+  }
+
+  async validateUser(email, password) {
+    const user = await this.getUserByEmail(email);
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      throw new Error('Incorrect password');
+    }
+
+    if (!user.password) {
+      throw new Error('Account not properly set up');
+    }
+
+    return user;
+  }
+
+  async validatePhone(phone, password) {
+    const user = await this.getUserByPhone(phone);
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      throw new Error('Incorrect password');
+    }
+
+    if (!user.password) {
+      throw new Error('Account not properly set up');
+    }
+
+    return user;
+  }
+
+  generateAuthToken(user) {
+    return jwt.sign(
+      { userId: user._id.toString() },
+      config.jwtSecret,
+      { expiresIn: '1d' }
+    );
+  }
 }
 
-module.exports = new Database(); 
+module.exports = new Database();
