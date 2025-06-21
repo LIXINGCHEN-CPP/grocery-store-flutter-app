@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/components/app_back_button.dart';
 import '../../core/constants/app_defaults.dart';
 import '../../core/providers/favorite_provider.dart';
+import '../../core/constants/app_icons.dart';
+import '../../core/providers/favorite_provider.dart';
+import '../../core/routes/app_routes.dart';
 import 'components/favorite_item_tile.dart';
 import 'empty_save_page.dart';
 
@@ -24,8 +28,20 @@ class SavePage extends StatelessWidget {
           appBar: isHomePage
               ? null
               : AppBar(
-                  leading: const AppBackButton(),
-                  title: Text('Favorites (${favoriteProvider.totalFavoritesCount})'),
+                  //leading: const AppBackButton(),
+                  leading: IconButton(
+                    onPressed: () {
+                      // Always return to home (entrypoint with home tab)
+                      Navigator.pushNamedAndRemoveUntil(
+                        context,
+                        AppRoutes.entryPoint,
+                        (route) => false,
+                      );
+                    },
+                    icon: SvgPicture.asset(AppIcons.arrowBackward),
+                  ),
+                  title: Text(
+                      'Favorites (${favoriteProvider.totalFavoritesCount})'),
                   actions: [
                     if (!favoriteProvider.isEmpty)
                       TextButton(
@@ -35,20 +51,23 @@ class SavePage extends StatelessWidget {
                             context: context,
                             builder: (context) => AlertDialog(
                               title: const Text('Clear Favorites'),
-                              content: const Text('Are you sure you want to clear all favorites?'),
+                              content: const Text(
+                                  'Are you sure you want to clear all favorites?'),
                               actions: [
                                 TextButton(
-                                  onPressed: () => Navigator.of(context).pop(false),
+                                  onPressed: () =>
+                                      Navigator.of(context).pop(false),
                                   child: const Text('Cancel'),
                                 ),
                                 TextButton(
-                                  onPressed: () => Navigator.of(context).pop(true),
+                                  onPressed: () =>
+                                      Navigator.of(context).pop(true),
                                   child: const Text('Confirm'),
                                 ),
                               ],
                             ),
                           );
-                          
+
                           if (shouldClear == true) {
                             await favoriteProvider.clearFavorites();
                             ScaffoldMessenger.of(context).showSnackBar(
@@ -75,7 +94,8 @@ class SavePage extends StatelessWidget {
                           physics: const NeverScrollableScrollPhysics(),
                           itemCount: favoriteProvider.favoriteItems.length,
                           itemBuilder: (context, index) {
-                            final favoriteItem = favoriteProvider.favoriteItems[index];
+                            final favoriteItem =
+                                favoriteProvider.favoriteItems[index];
                             return FavoriteItemTile(
                               favoriteItem: favoriteItem,
                               onRemove: () async {
@@ -85,7 +105,8 @@ class SavePage extends StatelessWidget {
                                 );
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
-                                    content: Text('Removed ${favoriteItem.name} from favorites'),
+                                    content: Text(
+                                        'Removed ${favoriteItem.name} from favorites'),
                                     backgroundColor: Colors.orange,
                                   ),
                                 );

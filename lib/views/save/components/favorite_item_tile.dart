@@ -26,13 +26,17 @@ class FavoriteItemTile extends StatelessWidget {
         // Check if item is in cart
         bool isInCart = false;
         int cartQuantity = 0;
-        
+
         if (favoriteItem.type == FavoriteItemType.product) {
-          isInCart = cartProvider.isInCart(favoriteItem.itemId, CartItemType.product);
-          cartQuantity = cartProvider.getItemQuantity(favoriteItem.itemId, CartItemType.product);
+          isInCart =
+              cartProvider.isInCart(favoriteItem.itemId, CartItemType.product);
+          cartQuantity = cartProvider.getItemQuantity(
+              favoriteItem.itemId, CartItemType.product);
         } else {
-          isInCart = cartProvider.isInCart(favoriteItem.itemId, CartItemType.bundle);
-          cartQuantity = cartProvider.getItemQuantity(favoriteItem.itemId, CartItemType.bundle);
+          isInCart =
+              cartProvider.isInCart(favoriteItem.itemId, CartItemType.bundle);
+          cartQuantity = cartProvider.getItemQuantity(
+              favoriteItem.itemId, CartItemType.bundle);
         }
 
         return Container(
@@ -65,9 +69,10 @@ class FavoriteItemTile extends StatelessWidget {
                     arguments: favoriteItem.productDetails,
                   );
                 } else {
+                  // Navigate to bundleProduct page for complete bundle details
                   Navigator.pushNamed(
                     context,
-                    AppRoutes.bundleDetailsPage,
+                    AppRoutes.bundleProduct,
                     arguments: favoriteItem.bundleDetails,
                   );
                 }
@@ -94,46 +99,58 @@ class FavoriteItemTile extends StatelessWidget {
                         children: [
                           Text(
                             favoriteItem.name,
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
-                            ),
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium
+                                ?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black,
+                                ),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
                           const SizedBox(height: 4),
                           Text(
                             favoriteItem.weight,
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Colors.grey[600],
-                            ),
+                            style:
+                                Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: Colors.grey[600],
+                                    ),
                           ),
                           const SizedBox(height: 8),
                           Row(
                             children: [
-                              if (favoriteItem.originalPrice > favoriteItem.currentPrice) ...[
+                              if (favoriteItem.originalPrice >
+                                  favoriteItem.currentPrice) ...[
                                 Text(
                                   '\$${favoriteItem.originalPrice.toStringAsFixed(2)}',
-                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: Colors.grey,
-                                    decoration: TextDecoration.lineThrough,
-                                  ),
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall
+                                      ?.copyWith(
+                                        color: Colors.grey,
+                                        decoration: TextDecoration.lineThrough,
+                                      ),
                                 ),
                                 const SizedBox(width: 8),
                               ],
                               Text(
                                 '\$${favoriteItem.currentPrice.toStringAsFixed(2)}',
-                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  color: AppColors.primary,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleMedium
+                                    ?.copyWith(
+                                      color: AppColors.primary,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                               ),
                             ],
                           ),
                           if (isInCart) ...[
                             const SizedBox(height: 4),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 2),
                               decoration: BoxDecoration(
                                 color: Colors.green.withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(12),
@@ -172,18 +189,24 @@ class FavoriteItemTile extends StatelessWidget {
                           ),
                           child: IconButton(
                             onPressed: () async {
-                              if (favoriteItem.type == FavoriteItemType.product && 
+                              if (favoriteItem.type ==
+                                      FavoriteItemType.product &&
                                   favoriteItem.productDetails != null) {
-                                await cartProvider.addProduct(favoriteItem.productDetails!, quantity: 1);
-                              } else if (favoriteItem.type == FavoriteItemType.bundle && 
-                                         favoriteItem.bundleDetails != null) {
-                                await cartProvider.addBundle(favoriteItem.bundleDetails!, quantity: 1);
+                                await cartProvider.addProduct(
+                                    favoriteItem.productDetails!,
+                                    quantity: 1);
+                              } else if (favoriteItem.type ==
+                                      FavoriteItemType.bundle &&
+                                  favoriteItem.bundleDetails != null) {
+                                await cartProvider.addBundle(
+                                    favoriteItem.bundleDetails!,
+                                    quantity: 1);
                               }
-                              
+
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text(isInCart 
-                                      ? 'Quantity increased' 
+                                  content: Text(isInCart
+                                      ? 'Quantity increased'
                                       : 'Added to cart'),
                                   duration: const Duration(milliseconds: 800),
                                   backgroundColor: Colors.green,
@@ -209,4 +232,4 @@ class FavoriteItemTile extends StatelessWidget {
       },
     );
   }
-} 
+}

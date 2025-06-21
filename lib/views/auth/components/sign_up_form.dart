@@ -74,7 +74,7 @@ class _SignUpFormState extends State<SignUpForm> {
             TextFormField(
               controller: _emailController,
               validator: (value) =>
-              value?.isEmpty ?? true ? 'Email is required' : null,
+                  value?.isEmpty ?? true ? 'Email is required' : null,
               textInputAction: TextInputAction.next,
               decoration: const InputDecoration(
                 hintText: 'Enter your email',
@@ -129,7 +129,10 @@ class _SignUpFormState extends State<SignUpForm> {
               ),
             ),
             const SizedBox(height: AppDefaults.padding),
-            SignUpButton(formKey: _formKey, onPressed: _onSignUp,),
+            SignUpButton(
+              formKey: _formKey,
+              onPressed: _onSignUp,
+            ),
             const SizedBox(height: AppDefaults.padding),
           ],
         ),
@@ -138,7 +141,8 @@ class _SignUpFormState extends State<SignUpForm> {
   }
 
   Future<void> _onSignUp() async {
-    if (_formKey.currentState == null || !_formKey.currentState!.validate()) return;
+    if (_formKey.currentState == null || !_formKey.currentState!.validate())
+      return;
 
     setState(() {
       isLoading = true;
@@ -152,8 +156,8 @@ class _SignUpFormState extends State<SignUpForm> {
       final password = _passwordController.text;
 
       print('Attempting register with phone: $phone');
-      final response =
-      await DatabaseService.instance.registerUser(email, phone, password, name);
+      final response = await DatabaseService.instance
+          .registerUser(email, phone, password, name);
       print('Register response: $response');
 
       if (response['success'] == true) {

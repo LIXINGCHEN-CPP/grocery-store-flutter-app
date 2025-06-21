@@ -16,13 +16,13 @@ class ProductGridView extends StatelessWidget {
       child: Consumer<AppProvider>(
         builder: (context, appProvider, child) {
           final products = appProvider.products;
-          
+
           if (products.isEmpty) {
             return const Center(
-              child: Text('暂无商品'),
+              child: Text('No products available'),
             );
           }
-          
+
           return GridView.builder(
             padding: const EdgeInsets.only(top: AppDefaults.padding),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(

@@ -45,7 +45,7 @@ class ProductTileSquare extends StatelessWidget {
               ),
               child: Container(
                 width: 176,
-                height: 300, // 增加高度以解决溢出问题
+                height: 280,
                 padding: const EdgeInsets.all(AppDefaults.padding),
                 decoration: BoxDecoration(
                   // border: Border.all(width: 0.1, color: AppColors.placeholder),

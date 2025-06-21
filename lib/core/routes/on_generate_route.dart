@@ -145,7 +145,10 @@ class RouteGenerator {
         return CupertinoPageRoute(builder: (_) => const AllOrderPage());
 
       case AppRoutes.orderDetails:
-        return CupertinoPageRoute(builder: (_) => const OrderDetailsPage());
+        return CupertinoPageRoute(
+          builder: (_) => const OrderDetailsPage(),
+          settings: settings,
+        );
 
       case AppRoutes.coupon:
         return CupertinoPageRoute(builder: (_) => const CouponAndOffersPage());

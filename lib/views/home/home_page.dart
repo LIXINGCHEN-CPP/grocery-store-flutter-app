@@ -14,7 +14,7 @@ import '../menu/components/category_tile.dart';
 import '../menu/menu_page.dart';
 import '../entrypoint/entrypoint_ui.dart';
 
-// 引入 Menu 页面里的 CategoryTile
+// Import CategoryTile from Menu page
 import '../menu/components/category_tile.dart';
 
 class HomePage extends StatefulWidget {
@@ -53,7 +53,7 @@ class _HomePageState extends State<HomePage> {
 
             return CustomScrollView(
               slivers: [
-                // 顶部 AppBar
+                // Top AppBar
                 SliverAppBar(
                   backgroundColor: const Color(0xFFf3f3f5),
                   leading: Padding(
@@ -88,7 +88,7 @@ class _HomePageState extends State<HomePage> {
                   ],
                 ),
 
-                // 广告横幅
+                // Advertisement banner
                 const SliverToBoxAdapter(child: AdSpace()),
 
                 // Categories section - using dynamic data
@@ -132,7 +132,7 @@ class _HomePageState extends State<HomePage> {
                                   onTap: () => Navigator.pushNamed(
                                     context,
                                     AppRoutes.categoryDetails,
-                                    arguments: category.id, // 传递分类ID
+                                    arguments: category.id, // Pass category ID
                                   ),
                                 ),
                               );
@@ -145,14 +145,11 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
 
-                // 原有热门套餐、新品等模块
+                // Original popular packages, new items and other modules
                 const SliverToBoxAdapter(child: PopularPacks()),
-                SliverPadding(
-                  padding: EdgeInsets.only(
-                    top: AppDefaults.padding,
-                    bottom: AppDefaults.padding + 11, // 增加底部padding以解决溢出问题
-                  ),
-                  sliver: const SliverToBoxAdapter(child: OurNewItem()),
+                const SliverPadding(
+                  padding: EdgeInsets.symmetric(vertical: AppDefaults.padding),
+                  sliver: SliverToBoxAdapter(child: OurNewItem()),
                 ),
               ],
             );

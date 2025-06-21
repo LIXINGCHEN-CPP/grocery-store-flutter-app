@@ -7,11 +7,13 @@ import 'core/themes/app_themes.dart';
 import 'core/providers/app_provider.dart';
 import 'core/providers/cart_provider.dart';
 import 'core/providers/favorite_provider.dart';
+import 'core/providers/order_provider.dart';
+import 'core/providers/notification_provider.dart';
 import 'core/services/database_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Initialize database connection
   try {
     await DatabaseService.instance.connect();
@@ -19,7 +21,7 @@ void main() async {
   } catch (e) {
     debugPrint('Database connection failed, using mock data: $e');
   }
-  
+
   runApp(const MyApp());
 }
 
@@ -41,10 +43,18 @@ class MyApp extends StatelessWidget {
           },
         ),
         ChangeNotifierProvider(
-          create: (context) => CartProvider(), // Constructor automatically loads cart data
+          create: (context) =>
+              CartProvider(), // Constructor automatically loads cart data
         ),
         ChangeNotifierProvider(
-          create: (context) => FavoriteProvider(), // Constructor automatically loads favorite data
+          create: (context) =>
+              FavoriteProvider(), // Constructor automatically loads favorite data
+        ),
+        ChangeNotifierProvider(
+          create: (context) => OrderProvider(),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => NotificationProvider(),
         ),
       ],
       child: MaterialApp(

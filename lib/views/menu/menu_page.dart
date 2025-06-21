@@ -54,12 +54,14 @@ class CategoriesGrid extends StatelessWidget {
               return CategoryTile(
                 imageLink: category.imageUrl,
                 label: category.name,
-                backgroundColor: Color(int.parse(category.backgroundColor.replaceFirst('#', '0xff'))),
+                backgroundColor: Color(int.parse(
+                    category.backgroundColor.replaceFirst('#', '0xff'))),
                 onTap: () {
                   Navigator.pushNamed(
-                    context, 
+                    context,
                     AppRoutes.categoryDetails,
-                    arguments: category.id, // 传递分类ID以便动态显示商品
+                    arguments: category
+                        .id, // Pass category ID for dynamic product display
                   );
                 },
               );

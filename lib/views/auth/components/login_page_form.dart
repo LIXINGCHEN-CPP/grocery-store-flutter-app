@@ -129,8 +129,10 @@ class _LoginPageFormState extends State<LoginPageForm> {
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
                         color: isPasswordShown
-                            ? Colors.green.withOpacity(0.1) // 显示密码时的背景色
-                            : Colors.transparent, // 隐藏密码时透明背景
+                            ? Colors.green.withOpacity(
+                                0.1) // Background color when password is visible
+                            : Colors
+                                .transparent, // Transparent background when password is hidden
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: SvgPicture.asset(
@@ -138,8 +140,10 @@ class _LoginPageFormState extends State<LoginPageForm> {
                         width: 24,
                         colorFilter: ColorFilter.mode(
                           isPasswordShown
-                              ? Colors.green // 显示密码时的图标颜色
-                              : Colors.grey, // 隐藏密码时的图标颜色
+                              ? Colors
+                                  .green // Icon color when password is visible
+                              : Colors
+                                  .grey, // Icon color when password is hidden
                           BlendMode.srcIn,
                         ),
                       ),
@@ -154,7 +158,10 @@ class _LoginPageFormState extends State<LoginPageForm> {
                 alignment: Alignment.centerRight,
                 child: TextButton(
                   onPressed: () {
-                    Navigator.pushNamed(context, AppRoutes.forgotPassword,);
+                    Navigator.pushNamed(
+                      context,
+                      AppRoutes.forgotPassword,
+                    );
                   },
                   child: const Text('Forget Password?'),
                 ),

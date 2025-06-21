@@ -284,8 +284,8 @@ router.post('/auth/user/update', asyncHandler(async (req, res) => {
 
     // 只更新传入字段，不影响其他原有字段，比如 password、email、_id 都自动保留
     await db.collection('users').updateOne(
-        { _id: new ObjectId(id) },
-        { $set: updateFields }
+      { _id: new ObjectId(id) },
+      { $set: updateFields }
     );
 
     // 获取更新后的用户信息
@@ -315,8 +315,8 @@ router.post('/auth/userById', asyncHandler(async (req, res) => {
 
     // 根据 id 查找用户
     const user = await db.collection('users').findOne(
-        { _id: new ObjectId(id) },
-        { projection: { password: 0 } } // 排除密码字段
+      { _id: new ObjectId(id) },
+      { projection: { password: 0 } } // 排除密码字段
     );
 
     if (!user) {
@@ -526,6 +526,218 @@ router.get('/bundles/:id', async (req, res) => {
     });
   }
 });
+
+// Orders endpoints
+router.post('/orders', asyncHandler(async (req, res) => {
+  try {
+    const { items, totalAmount, originalAmount, savings, paymentMethod, deliveryAddress } = req.body;
+
+    // Generate unique order ID
+    const orderId = Math.floor(100000000 + Math.random() * 900000000).toString();
+
+    const orderData = {
+      orderId,
+      status: 0, // confirmed
+      items,
+      totalAmount,
+      originalAmount,
+      savings,
+      paymentMethod,
+      deliveryAddress,
+      createdAt: new Date(),
+      confirmedAt: new Date()
+    };
+
+    const insertedId = await database.createOrder(orderData);
+
+    res.status(201).json({
+      success: true,
+      message: 'Order created successfully',
+      data: {
+        _id: insertedId.toString(),
+        orderId,
+        ...orderData
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to create order',
+      error: error.message
+    });
+  }
+}));
+
+router.get('/orders', asyncHandler(async (req, res) => {
+  try {
+    const filters = {};
+
+    // Parse query parameters
+    if (req.query.status) filters.status = parseInt(req.query.status);
+
+    const orders = await database.getOrders(filters);
+
+    // Convert ObjectId to string for all orders
+    const serializedOrders = orders.map(order => ({
+      ...order,
+      _id: order._id.toString(),
+      // Convert any nested ObjectIds in items
+      items: order.items ? order.items.map(item => ({
+        ...item,
+        // Convert ObjectIds in productDetails if present
+        productDetails: item.productDetails ? {
+          ...item.productDetails,
+          _id: item.productDetails._id ? item.productDetails._id.toString() : item.productDetails._id
+        } : item.productDetails,
+        // Convert ObjectIds in bundleDetails if present
+        bundleDetails: item.bundleDetails ? {
+          ...item.bundleDetails,
+          _id: item.bundleDetails._id ? item.bundleDetails._id.toString() : item.bundleDetails._id,
+          // Convert ObjectIds in bundle items
+          items: item.bundleDetails.items ? item.bundleDetails.items.map(bundleItem => ({
+            ...bundleItem,
+            productDetails: bundleItem.productDetails ? {
+              ...bundleItem.productDetails,
+              _id: bundleItem.productDetails._id ? bundleItem.productDetails._id.toString() : bundleItem.productDetails._id
+            } : bundleItem.productDetails
+          })) : item.bundleDetails.items
+        } : item.bundleDetails
+      })) : order.items
+    }));
+
+    res.json({
+      success: true,
+      data: serializedOrders,
+      count: serializedOrders.length,
+      filters: filters
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch orders',
+      error: error.message
+    });
+  }
+}));
+
+router.get('/orders/:id', asyncHandler(async (req, res) => {
+  try {
+    const order = await database.getOrderById(req.params.id);
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: 'Order not found'
+      });
+    }
+
+    // Convert ObjectId to string
+    const serializedOrder = {
+      ...order,
+      _id: order._id.toString(),
+      items: order.items ? order.items.map(item => ({
+        ...item,
+        productDetails: item.productDetails ? {
+          ...item.productDetails,
+          _id: item.productDetails._id ? item.productDetails._id.toString() : item.productDetails._id
+        } : item.productDetails,
+        bundleDetails: item.bundleDetails ? {
+          ...item.bundleDetails,
+          _id: item.bundleDetails._id ? item.bundleDetails._id.toString() : item.bundleDetails._id,
+          items: item.bundleDetails.items ? item.bundleDetails.items.map(bundleItem => ({
+            ...bundleItem,
+            productDetails: bundleItem.productDetails ? {
+              ...bundleItem.productDetails,
+              _id: bundleItem.productDetails._id ? bundleItem.productDetails._id.toString() : bundleItem.productDetails._id
+            } : bundleItem.productDetails
+          })) : item.bundleDetails.items
+        } : item.bundleDetails
+      })) : order.items
+    };
+
+    res.json({
+      success: true,
+      data: serializedOrder
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch order',
+      error: error.message
+    });
+  }
+}));
+
+router.get('/orders/by-order-id/:orderId', asyncHandler(async (req, res) => {
+  try {
+    const order = await database.getOrderByOrderId(req.params.orderId);
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: 'Order not found'
+      });
+    }
+
+    // Convert ObjectId to string
+    const serializedOrder = {
+      ...order,
+      _id: order._id.toString(),
+      items: order.items ? order.items.map(item => ({
+        ...item,
+        productDetails: item.productDetails ? {
+          ...item.productDetails,
+          _id: item.productDetails._id ? item.productDetails._id.toString() : item.productDetails._id
+        } : item.productDetails,
+        bundleDetails: item.bundleDetails ? {
+          ...item.bundleDetails,
+          _id: item.bundleDetails._id ? item.bundleDetails._id.toString() : item.bundleDetails._id,
+          items: item.bundleDetails.items ? item.bundleDetails.items.map(bundleItem => ({
+            ...bundleItem,
+            productDetails: bundleItem.productDetails ? {
+              ...bundleItem.productDetails,
+              _id: bundleItem.productDetails._id ? bundleItem.productDetails._id.toString() : bundleItem.productDetails._id
+            } : bundleItem.productDetails
+          })) : item.bundleDetails.items
+        } : item.bundleDetails
+      })) : order.items
+    };
+
+    res.json({
+      success: true,
+      data: serializedOrder
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch order',
+      error: error.message
+    });
+  }
+}));
+
+router.put('/orders/:id/status', asyncHandler(async (req, res) => {
+  try {
+    const { status } = req.body;
+    const result = await database.updateOrderStatus(req.params.id, status);
+
+    if (result.matchedCount === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Order not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Order status updated successfully'
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update order status',
+      error: error.message
+    });
+  }
+}));
 
 // Error handling middleware
 router.use((error, req, res, next) => {

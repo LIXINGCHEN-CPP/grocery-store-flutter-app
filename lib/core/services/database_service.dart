@@ -4,6 +4,36 @@ import 'package:http/http.dart' as http;
 import '../models/category_model.dart';
 import '../models/product_model.dart';
 import '../models/bundle_model.dart';
+import '../models/order_model.dart';
+import '../models/cart_item_model.dart';
+import '../enums/dummy_order_status.dart';
+import '../constants/api_constants.dart';
+import 'dart:math' as math;
+
+/// Product search data structure
+class ProductSearchData {
+  final String name;
+
+  ProductSearchData({
+    required this.name,
+  });
+}
+
+/// Keyword scoring result
+class _KeywordScoreResult {
+  final double score;
+  final String matchType;
+
+  _KeywordScoreResult({required this.score, required this.matchType});
+}
+
+/// Field scoring result
+class _FieldScoreResult {
+  final double score;
+  final String matchType;
+
+  _FieldScoreResult({required this.score, required this.matchType});
+}
 
 class DatabaseService {
   static final DatabaseService _instance = DatabaseService._internal();
@@ -15,8 +45,8 @@ class DatabaseService {
 
   // Backend API配置 - 使用10.0.2.2来访问主机localhost（适用于Android模拟器）
   static const String baseUrl =
-      'http://10.72.44.120:3000/api'; //10.0.2.2 192.168.56.1
-  static const String healthUrl = 'http://192.168.3.7:3000/health'; //10.0.2.2
+      'http://10.72.165.250:3000/api'; //10.0.2.2 192.168.56.1
+  static const String healthUrl = 'http://10.72.165.250:3000/health'; //10.0.2.2
   static const Duration timeoutDuration = Duration(seconds: 10);
 
   // Test backend connection
@@ -445,16 +475,7 @@ class DatabaseService {
   Future<List<ProductModel>> searchProducts(String query) async {
     if (_useLocalData) {
       final products = _getMockProducts();
-      return products
-          .where((product) =>
-              product.name.toLowerCase().contains(query.toLowerCase()) ||
-              (product.description
-                      ?.toLowerCase()
-                      .contains(query.toLowerCase()) ??
-                  false) ||
-              product.tags.any(
-                  (tag) => tag.toLowerCase().contains(query.toLowerCase())))
-          .toList();
+      return _searchProductsWithScoring(products, query);
     }
 
     try {
@@ -463,24 +484,157 @@ class DatabaseService {
 
       if (responseData['success'] == true) {
         final List<dynamic> data = responseData['data'];
-        return data.map((json) => ProductModel.fromJson(json)).toList();
+        final products =
+            data.map((json) => ProductModel.fromJson(json)).toList();
+        // Re-rank using local scoring algorithm to ensure frontend rule compliance
+        return _searchProductsWithScoring(products, query);
       } else {
         throw Exception(responseData['message'] ?? 'Search failed');
       }
     } catch (e) {
       debugPrint('Product search failed: $e, using local search');
       final products = await getProducts();
-      return products
-          .where((product) =>
-              product.name.toLowerCase().contains(query.toLowerCase()) ||
-              (product.description
-                      ?.toLowerCase()
-                      .contains(query.toLowerCase()) ??
-                  false) ||
-              product.tags.any(
-                  (tag) => tag.toLowerCase().contains(query.toLowerCase())))
-          .toList();
+      return _searchProductsWithScoring(products, query);
     }
+  }
+
+  /// Smart multi-keyword search algorithm: supports space-separated keywords, searches product name only
+  List<ProductModel> _searchProductsWithScoring(
+      List<ProductModel> products, String query) {
+    if (query.isEmpty) return [];
+
+    final originalQuery = query.trim();
+    final keywords = _splitQuery(originalQuery);
+    final List<MapEntry<ProductModel, double>> scoredResults = [];
+
+    debugPrint('🔍 Search query: "$originalQuery"');
+    debugPrint('📝 Split keywords: ${keywords.join(", ")}');
+
+    for (final product in products) {
+      final ProductSearchData searchData = ProductSearchData(
+        name: product.name.toLowerCase(),
+      );
+
+      double totalScore = 0;
+      List<String> matchDetails = [];
+      int matchedKeywords = 0;
+
+      // Calculate score for each keyword
+      for (final keyword in keywords) {
+        final keywordScore = _calculateKeywordScore(searchData, keyword);
+        if (keywordScore.score > 0) {
+          totalScore += keywordScore.score;
+          matchedKeywords++;
+          matchDetails.add(
+              '${keyword}(${keywordScore.score.toStringAsFixed(0)}${keywordScore.matchType})');
+        }
+      }
+
+      // Only products matching all keywords are included in results
+      if (matchedKeywords == keywords.length) {
+        // Multi-keyword bonus: more keywords matched, higher reward
+        double multiKeywordBonus =
+            keywords.length > 1 ? (keywords.length - 1) * 100 : 0;
+        totalScore += multiKeywordBonus;
+
+        // Length weight: shorter product names get higher scores
+        double lengthBonus = math.max(0, (30 - searchData.name.length) * 3);
+        totalScore += lengthBonus;
+
+        // Completeness bonus: more complete matches get higher scores
+        double completenessBonus = (matchedKeywords / keywords.length) * 200;
+        totalScore += completenessBonus;
+
+        debugPrint(
+            '  ✅ ${product.name} -> Score: ${totalScore.toStringAsFixed(1)} (${matchDetails.join(", ")})');
+        scoredResults.add(MapEntry(product, totalScore));
+      } else {
+        debugPrint(
+            '  ❌ ${product.name} -> Partial match ($matchedKeywords/${keywords.length} keywords)');
+      }
+    }
+
+    // Sort by score in descending order
+    scoredResults.sort((a, b) => b.value.compareTo(a.value));
+
+    debugPrint('🏆 Search results sorted (total ${scoredResults.length}):');
+    for (int i = 0; i < math.min(5, scoredResults.length); i++) {
+      final entry = scoredResults[i];
+      debugPrint(
+          '  ${i + 1}. ${entry.key.name} (${entry.value.toStringAsFixed(1)})');
+    }
+
+    return scoredResults.map((entry) => entry.key).toList();
+  }
+
+  /// Split query into multiple keywords
+  List<String> _splitQuery(String query) {
+    return query
+        .toLowerCase()
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((keyword) => keyword.isNotEmpty)
+        .toList();
+  }
+
+  /// Calculate score of a single keyword in product name
+  _KeywordScoreResult _calculateKeywordScore(
+      ProductSearchData searchData, String keyword) {
+    // Search only in product name
+    final nameScore = _calculateFieldScore(searchData.name, keyword, 1.0);
+    return _KeywordScoreResult(
+      score: nameScore.score,
+      matchType: nameScore.matchType,
+    );
+  }
+
+  /// Calculate field matching score
+  _FieldScoreResult _calculateFieldScore(
+      String field, String keyword, double fieldWeight) {
+    if (field.isEmpty || keyword.isEmpty) {
+      return _FieldScoreResult(score: 0, matchType: '');
+    }
+
+    double baseScore = 0;
+    String matchType = '';
+
+    // 1. Exact match (highest score)
+    if (field == keyword) {
+      baseScore = 1000;
+      matchType = '=';
+    }
+    // 2. Starts with keyword (high score)
+    else if (field.startsWith(keyword)) {
+      baseScore = 900;
+      matchType = '^';
+    }
+    // 3. Word starts match (medium-high score)
+    else if (_wordStartsMatch(field, keyword)) {
+      baseScore = 700;
+      matchType = 'W';
+    }
+    // 4. Contains match (medium score)
+    else if (field.contains(keyword)) {
+      // Base score determined by keyword length, single character gets lower score
+      baseScore = keyword.length == 1 ? 300 : 500;
+      matchType = '~';
+      // Position weight: earlier position gets higher weight
+      int position = field.indexOf(keyword);
+      baseScore = baseScore - (position * 5);
+      // Ensure the score never drops below zero to avoid negative keyword impact
+      baseScore = math.max(0, baseScore);
+    }
+
+    // Apply field weight
+    double finalScore = baseScore * fieldWeight;
+
+    return _FieldScoreResult(score: finalScore, matchType: matchType);
+  }
+
+  /// Check if any word starts with the keyword
+  bool _wordStartsMatch(String text, String keyword) {
+    final words = text.split(RegExp(r'[^a-zA-Z0-9]+'));
+    return words.any((word) => word.startsWith(keyword) && word.isNotEmpty);
   }
 
   // Mock data methods
@@ -596,7 +750,7 @@ class DatabaseService {
         images: ['https://i.imgur.com/6unJlSL.png'],
         currentPrice: 13,
         originalPrice: 15,
-        categoryId: '12', // Others category (修正从Beauty改为Others)
+        categoryId: '12', // Others category (corrected from Beauty to Others)
         stock: 50,
         isNew: true,
         tags: ['ice cream', 'dessert', 'banana'],
@@ -610,7 +764,7 @@ class DatabaseService {
         images: ['https://i.imgur.com/oaCY49b.png'],
         currentPrice: 12,
         originalPrice: 15,
-        categoryId: '12', // Others category (修正从Beauty改为Others)
+        categoryId: '12', // Others category (corrected from Beauty to Others)
         stock: 30,
         isNew: true,
         tags: ['ice cream', 'dessert', 'vanilla'],
@@ -996,6 +1150,344 @@ class DatabaseService {
         categoryId: '3', // Medicine category
         isActive: true,
         isPopular: false,
+      ),
+    ];
+  }
+
+  // Orders CRUD operations
+  Future<OrderModel?> createOrder({
+    required List<CartItemModel> items,
+    required double totalAmount,
+    required double originalAmount,
+    required double savings,
+    required String paymentMethod,
+    required String deliveryAddress,
+  }) async {
+    // Try to reconnect if we're using local data
+    if (_useLocalData) {
+      debugPrint('Attempting to reconnect to backend before creating order...');
+      final connected = await connect();
+      if (!connected) {
+        debugPrint('Creating order with local mock data');
+        return _createMockOrder(
+          items: items,
+          totalAmount: totalAmount,
+          originalAmount: originalAmount,
+          savings: savings,
+          paymentMethod: paymentMethod,
+          deliveryAddress: deliveryAddress,
+        );
+      }
+    }
+
+    try {
+      final requestBody = {
+        'items': items.map((item) => item.toJson()).toList(),
+        'totalAmount': totalAmount,
+        'originalAmount': originalAmount,
+        'savings': savings,
+        'paymentMethod': paymentMethod,
+        'deliveryAddress': deliveryAddress,
+      };
+
+      debugPrint('Sending order request to: ${ApiConstants.baseUrl}/orders');
+      debugPrint('Request body: ${json.encode(requestBody)}');
+
+      final response = await http
+          .post(
+            Uri.parse('${ApiConstants.baseUrl}/orders'),
+            headers: {'Content-Type': 'application/json'},
+            body: json.encode(requestBody),
+          )
+          .timeout(ApiConstants.timeoutDuration);
+
+      debugPrint('Order response status: ${response.statusCode}');
+      debugPrint('Order response body: ${response.body}');
+
+      if (response.statusCode == 201) {
+        final responseData = json.decode(response.body);
+        if (responseData['success'] == true) {
+          debugPrint('Order created successfully via API');
+          debugPrint('Parsing order data: ${responseData['data']}');
+          return OrderModel.fromJson(responseData['data']);
+        }
+      }
+
+      throw Exception('HTTP ${response.statusCode}: ${response.body}');
+    } catch (e) {
+      debugPrint('Failed to create order via API: $e, using local data');
+      _useLocalData = true;
+      return _createMockOrder(
+        items: items,
+        totalAmount: totalAmount,
+        originalAmount: originalAmount,
+        savings: savings,
+        paymentMethod: paymentMethod,
+        deliveryAddress: deliveryAddress,
+      );
+    }
+  }
+
+  Future<List<OrderModel>> getOrders({OrderStatus? status}) async {
+    if (_useLocalData) {
+      debugPrint('Using local order data');
+      return _getMockOrders().where((order) {
+        if (status != null && order.status != status) return false;
+        return true;
+      }).toList();
+    }
+
+    try {
+      final queryParams = <String, String>{};
+      if (status != null) queryParams['status'] = status.index.toString();
+
+      final queryString = queryParams.isNotEmpty
+          ? '?' +
+              queryParams.entries.map((e) => '${e.key}=${e.value}').join('&')
+          : '';
+
+      final responseData = await _makeRequest('/orders$queryString');
+
+      if (responseData['success'] == true) {
+        final List<dynamic> data = responseData['data'];
+        debugPrint('Successfully fetched ${data.length} orders from API');
+
+        // For now, only show the last 3 most recent orders to simulate user filtering
+        final allOrders =
+            data.map((json) => OrderModel.fromJson(json)).toList();
+        allOrders.sort((a, b) =>
+            b.createdAt.compareTo(a.createdAt)); // Sort by newest first
+        final recentOrders =
+            allOrders.take(3).toList(); // Take only the 3 most recent
+        debugPrint('Showing ${recentOrders.length} recent orders');
+
+        return recentOrders;
+      } else {
+        throw Exception(responseData['message'] ?? 'Failed to fetch orders');
+      }
+    } catch (e) {
+      debugPrint('Failed to fetch orders: $e, using local data');
+      _useLocalData = true;
+      return _getMockOrders().where((order) {
+        if (status != null && order.status != status) return false;
+        return true;
+      }).toList();
+    }
+  }
+
+  Future<OrderModel?> getOrderById(String id) async {
+    if (_useLocalData) {
+      try {
+        return _getMockOrders().firstWhere((order) => order.id == id);
+      } catch (e) {
+        return null;
+      }
+    }
+
+    try {
+      final responseData = await _makeRequest('/orders/$id');
+
+      if (responseData['success'] == true) {
+        return OrderModel.fromJson(responseData['data']);
+      }
+      return null;
+    } catch (e) {
+      debugPrint('Failed to fetch order: $e');
+      return null;
+    }
+  }
+
+  Future<OrderModel?> getOrderByOrderId(String orderId) async {
+    if (_useLocalData) {
+      try {
+        return _getMockOrders().firstWhere((order) => order.orderId == orderId);
+      } catch (e) {
+        return null;
+      }
+    }
+
+    try {
+      final responseData = await _makeRequest('/orders/by-order-id/$orderId');
+
+      if (responseData['success'] == true) {
+        return OrderModel.fromJson(responseData['data']);
+      }
+      return null;
+    } catch (e) {
+      debugPrint('Failed to fetch order by order ID: $e');
+      return null;
+    }
+  }
+
+  Future<bool> updateOrderStatus(String orderId, OrderStatus newStatus) async {
+    if (_useLocalData) {
+      debugPrint(
+          'Mock order status update for order: $orderId to ${newStatus.name}');
+      return true; // Mock success
+    }
+
+    try {
+      final response = await http
+          .put(
+            Uri.parse('${ApiConstants.baseUrl}/orders/$orderId/status'),
+            headers: {'Content-Type': 'application/json'},
+            body: json.encode({'status': newStatus.index}),
+          )
+          .timeout(ApiConstants.timeoutDuration);
+
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        return responseData['success'] == true;
+      }
+
+      return false;
+    } catch (e) {
+      debugPrint('Failed to update order status: $e');
+      return false;
+    }
+  }
+
+  // Mock order creation
+  OrderModel _createMockOrder({
+    required List<CartItemModel> items,
+    required double totalAmount,
+    required double originalAmount,
+    required double savings,
+    required String paymentMethod,
+    required String deliveryAddress,
+  }) {
+    final orderId = (math.Random().nextInt(900000000) + 100000000).toString();
+    final now = DateTime.now();
+
+    return OrderModel(
+      id: 'order_${DateTime.now().millisecondsSinceEpoch}',
+      orderId: orderId,
+      status: OrderStatus.confirmed,
+      items: items,
+      totalAmount: totalAmount,
+      originalAmount: originalAmount,
+      savings: savings,
+      paymentMethod: paymentMethod,
+      deliveryAddress: deliveryAddress,
+      createdAt: now,
+      confirmedAt: now,
+    );
+  }
+
+  // Mock orders data
+  List<OrderModel> _getMockOrders() {
+    final now = DateTime.now();
+    final yesterday = now.subtract(const Duration(days: 1));
+    final twoDaysAgo = now.subtract(const Duration(days: 2));
+
+    return [
+      OrderModel(
+        id: 'order_1',
+        orderId: '232425627',
+        status: OrderStatus.delivery,
+        items: [
+          CartItemModel(
+            id: 'cart_1',
+            type: CartItemType.product,
+            itemId: 'prod_1',
+            name: 'Sample Product 1',
+            weight: '500g',
+            coverImage: 'https://example.com/product1.jpg',
+            currentPrice: 15.0,
+            originalPrice: 18.0,
+            quantity: 3,
+            addedAt: twoDaysAgo,
+          ),
+          CartItemModel(
+            id: 'cart_2',
+            type: CartItemType.product,
+            itemId: 'prod_2',
+            name: 'Sample Product 2',
+            weight: '1kg',
+            coverImage: 'https://example.com/product2.jpg',
+            currentPrice: 12.0,
+            originalPrice: 15.0,
+            quantity: 3,
+            addedAt: twoDaysAgo,
+          ),
+          CartItemModel(
+            id: 'cart_3',
+            type: CartItemType.product,
+            itemId: 'prod_3',
+            name: 'Sample Product 3',
+            weight: '750g',
+            coverImage: 'https://example.com/product3.jpg',
+            currentPrice: 20.0,
+            originalPrice: 25.0,
+            quantity: 3,
+            addedAt: twoDaysAgo,
+          ),
+        ],
+        totalAmount: 120.0,
+        originalAmount: 141.0,
+        savings: 21.0,
+        paymentMethod: 'Credit Card',
+        deliveryAddress: '123 Main Street, City, State',
+        createdAt: twoDaysAgo,
+        confirmedAt: twoDaysAgo,
+        processingAt: twoDaysAgo.add(const Duration(hours: 2)),
+        shippedAt: yesterday,
+        deliveredAt: now.subtract(const Duration(hours: 1)),
+      ),
+      OrderModel(
+        id: 'order_2',
+        orderId: '232425628',
+        status: OrderStatus.shipped,
+        items: [
+          CartItemModel(
+            id: 'cart_4',
+            type: CartItemType.product,
+            itemId: 'prod_4',
+            name: 'Fresh Vegetables',
+            weight: '1kg',
+            coverImage: 'https://example.com/vegetables.jpg',
+            currentPrice: 8.0,
+            originalPrice: 10.0,
+            quantity: 2,
+            addedAt: yesterday,
+          ),
+        ],
+        totalAmount: 16.0,
+        originalAmount: 20.0,
+        savings: 4.0,
+        paymentMethod: 'PayPal',
+        deliveryAddress: '456 Oak Avenue, City, State',
+        createdAt: yesterday,
+        confirmedAt: yesterday,
+        processingAt: yesterday.add(const Duration(hours: 1)),
+        shippedAt: now.subtract(const Duration(hours: 3)),
+      ),
+      OrderModel(
+        id: 'order_3',
+        orderId: '232425629',
+        status: OrderStatus.processing,
+        items: [
+          CartItemModel(
+            id: 'cart_5',
+            type: CartItemType.bundle,
+            itemId: 'bundle_1',
+            name: 'Grocery Bundle',
+            weight: 'Bundle',
+            coverImage: 'https://example.com/bundle.jpg',
+            currentPrice: 45.0,
+            originalPrice: 60.0,
+            quantity: 1,
+            addedAt: now.subtract(const Duration(hours: 4)),
+          ),
+        ],
+        totalAmount: 45.0,
+        originalAmount: 60.0,
+        savings: 15.0,
+        paymentMethod: 'Cash on Delivery',
+        deliveryAddress: '789 Pine Street, City, State',
+        createdAt: now.subtract(const Duration(hours: 4)),
+        confirmedAt: now.subtract(const Duration(hours: 4)),
+        processingAt: now.subtract(const Duration(hours: 2)),
       ),
     ];
   }

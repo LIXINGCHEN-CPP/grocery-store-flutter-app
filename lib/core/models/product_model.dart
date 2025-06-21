@@ -37,7 +37,7 @@ class ProductModel {
     this.updatedAt,
   });
 
-  // 保持兼容性的getter，映射到新的字段名
+  // Compatibility getter, mapped to new field name
   String get cover => coverImage;
   double get price => currentPrice;
   double get mainPrice => originalPrice;
@@ -50,8 +50,10 @@ class ProductModel {
       weight: json['weight'] as String,
       coverImage: json['coverImage'] as String? ?? json['cover'] as String,
       images: List<String>.from(json['images'] as List? ?? []),
-      currentPrice: (json['currentPrice'] as num?)?.toDouble() ?? (json['price'] as num).toDouble(),
-      originalPrice: (json['originalPrice'] as num?)?.toDouble() ?? (json['mainPrice'] as num).toDouble(),
+      currentPrice: (json['currentPrice'] as num?)?.toDouble() ??
+          (json['price'] as num).toDouble(),
+      originalPrice: (json['originalPrice'] as num?)?.toDouble() ??
+          (json['mainPrice'] as num).toDouble(),
       categoryId: json['categoryId']?.toString(),
       stock: json['stock'] as int? ?? 0,
       isActive: json['isActive'] as bool? ?? true,
@@ -59,8 +61,10 @@ class ProductModel {
       isPopular: json['isPopular'] as bool? ?? false,
       tags: List<String>.from(json['tags'] as List? ?? []),
       nutritionInfo: json['nutritionInfo'] as Map<String, dynamic>?,
-      createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
-      updatedAt: json['updatedAt'] != null ? DateTime.parse(json['updatedAt']) : null,
+      createdAt:
+          json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
+      updatedAt:
+          json['updatedAt'] != null ? DateTime.parse(json['updatedAt']) : null,
     );
   }
 
@@ -81,7 +85,8 @@ class ProductModel {
       'isPopular': isPopular,
       'tags': tags,
       if (nutritionInfo != null) 'nutritionInfo': nutritionInfo,
-      'createdAt': createdAt?.toIso8601String() ?? DateTime.now().toIso8601String(),
+      'createdAt':
+          createdAt?.toIso8601String() ?? DateTime.now().toIso8601String(),
       'updatedAt': DateTime.now().toIso8601String(),
     };
   }
@@ -125,4 +130,4 @@ class ProductModel {
       updatedAt: updatedAt ?? this.updatedAt,
     );
   }
-} 
+}

@@ -88,7 +88,7 @@ class _AdSpaceState extends State<AdSpace> {
 
   @override
   Widget build(BuildContext context) {
-    // 屏幕可用宽度
+    // Available screen width
     final screenWidth = MediaQuery.of(context).size.width;
 
     if (!_isInitialized) {
@@ -99,7 +99,7 @@ class _AdSpaceState extends State<AdSpace> {
       padding: const EdgeInsets.symmetric(horizontal: AppDefaults.padding),
       child: SizedBox(
         width: screenWidth,
-        // 保证宽高比 16:9
+        // Ensure aspect ratio 16:9
         child: AspectRatio(
           aspectRatio: 16 / 9,
           child: CarouselSlider.builder(
@@ -146,20 +146,20 @@ class _AdSpaceState extends State<AdSpace> {
               );
             },
             options: CarouselOptions(
-              // 视口占满整个 AspectRatio 区域
+              // Viewport fills the entire AspectRatio area
               viewportFraction: 1.0,
-              // 自动播放
+              // Auto play
               autoPlay: true,
-              // 中心放大，去掉也行，按需设
+              // Center enlargement, optional, set as needed
               enlargeCenterPage: true,
-              // 不再使用 aspectRatio 参数，外层 AspectRatio 已固定大小
+              // No longer use aspectRatio parameter, outer AspectRatio has fixed size
               // aspectRatio: 16/9,
 
               // 每隔 10 秒切换一次，视频播放时间更长
               autoPlayInterval: const Duration(seconds: 10),
               // 滑动动画持续 800 毫秒
               autoPlayAnimationDuration: const Duration(milliseconds: 600),
-              // 动画曲线（可选）
+              // Animation curve (optional)
               autoPlayCurve: Curves.easeInOut,
 
               // 页面变化时的回调

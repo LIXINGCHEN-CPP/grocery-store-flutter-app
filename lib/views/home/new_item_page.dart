@@ -23,13 +23,13 @@ class NewItemsPage extends StatelessWidget {
           child: Consumer<AppProvider>(
             builder: (context, appProvider, child) {
               final products = appProvider.newProducts;
-              
+
               if (products.isEmpty) {
                 return const Center(
-                  child: Text('暂无新品商品'),
+                  child: Text('No new products available'),
                 );
               }
-              
+
               return GridView.builder(
                 padding: const EdgeInsets.only(top: AppDefaults.padding),
                 gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(

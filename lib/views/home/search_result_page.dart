@@ -24,13 +24,13 @@ class SearchResultPage extends StatelessWidget {
           child: Consumer<AppProvider>(
             builder: (context, appProvider, child) {
               final products = appProvider.products;
-              
+
               if (products.isEmpty) {
                 return const Center(
-                  child: Text('暂无搜索结果'),
+                  child: Text('No search results'),
                 );
               }
-              
+
               return GridView.builder(
                 padding: const EdgeInsets.only(top: AppDefaults.padding),
                 gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
