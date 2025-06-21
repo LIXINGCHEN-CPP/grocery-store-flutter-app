@@ -1,0 +1,20 @@
+{
+  "buildFiles": [
+    "D:\\Program Files\\FlutterSDK\\flutter\\packages\\flutter_tools\\gradle\\src\\main\\groovy\\CMakeLists.txt"
+  ],
+  "cleanCommandsComponents": [
+    [
+      "C:\\Users\\Administrator\\AppData\\Local\\Android\\sdk\\cmake\\3.22.1\\bin\\ninja.exe",
+      "-C",
+      "D:\\Program Files\\Flutter Project\\ASG\\ASG2\\grocery-store-flutter-app\\android\\app\\.cxx\\Debug\\3r5l46i5\\x86",
+      "clean"
+    ]
+  ],
+  "buildTargetsCommandComponents": [
+    "C:\\Users\\Administrator\\AppData\\Local\\Android\\sdk\\cmake\\3.22.1\\bin\\ninja.exe",
+    "-C",
+    "D:\\Program Files\\Flutter Project\\ASG\\ASG2\\grocery-store-flutter-app\\android\\app\\.cxx\\Debug\\3r5l46i5\\x86",
+    "{LIST_OF_TARGETS_TO_BUILD}"
+  ],
+  "libraries": {}
+}
